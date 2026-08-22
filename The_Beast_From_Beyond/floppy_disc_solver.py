@@ -83,6 +83,12 @@ class FloppySolverApp(tk.Tk):
 
         ttk.Button(
             top,
+            text="6 Lösungen anzeigen",
+            command=self.show_solutions
+        ).pack(side="right", padx=(8, 0))
+
+        ttk.Button(
+            top,
             text="Reset",
             command=self.reset
         ).pack(side="right")
@@ -354,6 +360,78 @@ class FloppySolverApp(tk.Tk):
     def clear_result(self):
         self.result_text.configure(text="Noch keine vier Symbole ausgewählt.")
         self.clear_result_icons()
+
+    def show_solutions(self):
+        win = tk.Toplevel(self)
+        win.title("Die 6 möglichen Reihenfolgen")
+        win.resizable(False, False)
+        win.transient(self)
+
+        outer = ttk.Frame(win, padding=16)
+        outer.pack(fill="both", expand=True)
+
+        title = ttk.Label(
+            outer,
+            text="Die 6 vollständigen Lösungen",
+            font=("Segoe UI", 18, "bold")
+        )
+        title.pack(pady=(0, 12))
+
+        info = ttk.Label(
+            outer,
+            text=(
+                "Jede Zeile zeigt die komplette Reihenfolge der 6 Symbole "
+                "von links nach rechts."
+            ),
+            font=("Segoe UI", 10),
+            justify="center"
+        )
+        info.pack(pady=(0, 14))
+
+        grid = ttk.Frame(outer)
+        grid.pack()
+
+        # Keep PhotoImage references alive for the lifetime of the window.
+        win.solution_images = []
+
+        for row_idx, sequence in enumerate(SEQUENCES):
+            row_label = ttk.Label(
+                grid,
+                text=f"Reihe {row_idx + 1}:",
+                font=("Segoe UI", 11, "bold")
+            )
+            row_label.grid(row=row_idx, column=0, padx=(0, 12), pady=8, sticky="e")
+
+            for col, icon_idx in enumerate(sequence, start=1):
+                path = self.icon_dir / ICON_FILES[icon_idx]
+
+                if path.exists():
+                    try:
+                        img = Image.open(path).convert("RGBA")
+                        img.thumbnail((58, 58), Image.Resampling.LANCZOS)
+                        photo = ImageTk.PhotoImage(img)
+                        win.solution_images.append(photo)
+
+                        label = ttk.Label(grid, image=photo)
+                        label.grid(row=row_idx, column=col, padx=4, pady=4)
+                    except Exception:
+                        ttk.Label(
+                            grid,
+                            text=str(icon_idx),
+                            font=("Segoe UI", 11, "bold")
+                        ).grid(row=row_idx, column=col, padx=8, pady=4)
+                else:
+                    ttk.Label(
+                        grid,
+                        text=str(icon_idx),
+                        font=("Segoe UI", 11, "bold")
+                    ).grid(row=row_idx, column=col, padx=8, pady=4)
+
+        ttk.Button(
+            outer,
+            text="Schließen",
+            command=win.destroy
+        ).pack(pady=(16, 0))
 
     def reset(self):
         self.selected.clear()
